@@ -5,20 +5,15 @@ class My_SEO_Term_Fields {
 
     public function __construct() {
         add_action( 'registered_taxonomy', [ $this, 'attach_hooks' ], 10, 3 );
-        // На случай, если таксономия уже зарегистрирована до init нашего плагина
         add_action( 'init', [ $this, 'attach_existing' ], 999 );
     }
 
-    /**
-     * Срабатывает для каждой register_taxonomy().
-     */
     public function attach_hooks( $taxonomy, $object_type, $args ) {
         if ( isset( self::$attached[ $taxonomy ] ) ) return;
 
         $args = (array) $args;
         if ( empty( $args['show_ui'] ) ) return;
 
-        // Исключаем системные
         $skip = [ 'nav_menu', 'link_category', 'post_format', 'wp_theme', 'wp_template_part_area', 'wp_pattern_category' ];
         if ( in_array( $taxonomy, $skip, true ) ) return;
 
@@ -30,9 +25,6 @@ class My_SEO_Term_Fields {
         add_action( "edited_{$taxonomy}",  [ $this, 'save' ], 10, 1 );
     }
 
-    /**
-     * Добор для таксономий, зарегистрированных до нас.
-     */
     public function attach_existing() {
         foreach ( get_taxonomies([ 'show_ui' => true ], 'objects' ) as $tax ) {
             $this->attach_hooks( $tax->name, $tax->object_type, (array) $tax );
@@ -65,6 +57,10 @@ class My_SEO_Term_Fields {
             </select>
         </div>
         <div class="form-field">
+            <label>OG Image (URL)</label>
+            <input type="url" name="seo_og_image">
+        </div>
+        <div class="form-field">
             <label>
                 <input type="checkbox" name="seo_cascade_noindex" value="1">
                 Закрыть от индексации всё вложенное
@@ -80,6 +76,7 @@ class My_SEO_Term_Fields {
         $desc    = get_term_meta( $term->term_id, '_seo_description', true );
         $canon   = get_term_meta( $term->term_id, '_seo_canonical', true );
         $robots  = get_term_meta( $term->term_id, '_seo_robots', true );
+        $og_img  = get_term_meta( $term->term_id, '_seo_og_image', true );
         $cascade = get_term_meta( $term->term_id, '_seo_cascade_noindex', true );
         ?>
         <tr class="form-field">
@@ -106,6 +103,10 @@ class My_SEO_Term_Fields {
             </td>
         </tr>
         <tr class="form-field">
+            <th><label>OG Image (URL)</label></th>
+            <td><input type="url" name="seo_og_image" value="<?php echo esc_attr( $og_img ); ?>" class="regular-text"></td>
+        </tr>
+        <tr class="form-field">
             <th><label>Каскадный noindex</label></th>
             <td>
                 <label>
@@ -128,11 +129,16 @@ class My_SEO_Term_Fields {
                 else update_term_meta( $term_id, '_' . $f, $val );
             }
         }
-        if ( isset( $_POST['seo_canonical'] ) ) {
-            $val = esc_url_raw( $_POST['seo_canonical'] );
-            if ( $val === '' ) delete_term_meta( $term_id, '_seo_canonical' );
-            else update_term_meta( $term_id, '_seo_canonical', $val );
+
+        $url_fields = [ 'seo_canonical', 'seo_og_image' ];
+        foreach ( $url_fields as $f ) {
+            if ( isset( $_POST[ $f ] ) ) {
+                $val = esc_url_raw( $_POST[ $f ] );
+                if ( $val === '' ) delete_term_meta( $term_id, '_' . $f );
+                else update_term_meta( $term_id, '_' . $f, $val );
+            }
         }
+
         update_term_meta( $term_id, '_seo_cascade_noindex', isset( $_POST['seo_cascade_noindex'] ) ? '1' : '' );
     }
 }

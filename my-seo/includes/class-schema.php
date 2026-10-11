@@ -10,13 +10,10 @@ class My_SEO_Schema {
 
         $graph = [];
         $graph[] = $this->organization( $s );
-        $graph[] = $this->website();
+        $graph[] = $this->website( $s );
 
         if ( is_singular( 'post' ) ) {
             $graph[] = $this->article();
-        }
-        if ( ! is_front_page() ) {
-            $graph[] = $this->breadcrumbs();
         }
 
         $graph = array_values( array_filter( $graph ) );
@@ -28,17 +25,56 @@ class My_SEO_Schema {
     }
 
     private function organization( $s ) {
-        return [
+        $node = [
             '@type' => 'Organization',
             '@id'   => home_url( '/#organization' ),
             'name'  => $s['org_name'] ?: get_bloginfo( 'name' ),
             'url'   => home_url( '/' ),
-            'logo'  => $s['org_logo'] ? [ '@type' => 'ImageObject', 'url' => $s['org_logo'] ] : null,
         ];
+
+        if ( ! empty( $s['org_alt_name'] ) ) {
+            $node['alternateName'] = $s['org_alt_name'];
+        }
+        if ( ! empty( $s['org_legal_name'] ) ) {
+            $node['legalName'] = $s['org_legal_name'];
+        }
+        if ( ! empty( $s['org_logo'] ) ) {
+            $node['logo'] = [ '@type' => 'ImageObject', 'url' => $s['org_logo'] ];
+        }
+        if ( ! empty( $s['org_description'] ) ) {
+            $node['description'] = $s['org_description'];
+        }
+        if ( ! empty( $s['org_email'] ) ) {
+            $node['email'] = $s['org_email'];
+        }
+        if ( ! empty( $s['org_phone'] ) ) {
+            $node['telephone'] = $s['org_phone'];
+        }
+        if ( ! empty( $s['org_founding_date'] ) ) {
+            $node['foundingDate'] = $s['org_founding_date'];
+        }
+        if ( ! empty( $s['org_employees'] ) ) {
+            $node['numberOfEmployees'] = [
+                '@type' => 'QuantitativeValue',
+                'value' => $s['org_employees'],
+            ];
+        }
+
+        $same_as = [];
+        foreach ( [ 'social_telegram', 'social_vk', 'social_youtube' ] as $k ) {
+            if ( ! empty( $s[ $k ] ) ) {
+                $same_as[] = $s[ $k ];
+            }
+        }
+        if ( $same_as ) {
+            $node['sameAs'] = $same_as;
+        }
+
+        return $node;
     }
 
-    private function website() {
-        return [
+    private function website( $s ) {
+        $node = [
             '@type'       => 'WebSite',
             '@id'         => home_url( '/#website' ),
             'url'         => home_url( '/' ),
@@ -52,6 +88,12 @@ class My_SEO_Schema {
                 'query-input' => 'required name=search_term_string',
             ],
         ];
+
+        if ( ! empty( $s['site_alt_name'] ) ) {
+            $node['alternativeName'] = $s['site_alt_name'];
+        }
+
+        return $node;
     }
 
     private function article() {
@@ -72,36 +114,5 @@ class My_SEO_Schema {
             'mainEntityOfPage' => [ '@id' => get_permalink() ],
             'image'            => has_post_thumbnail() ? get_the_post_thumbnail_url( null, 'full' ) : null,
         ];
-    }
-
-    private function breadcrumbs() {
-        $items = [];
-        $pos   = 1;
-        $items[] = [ '@type' => 'ListItem', 'position' => $pos++, 'name' => 'Главная', 'item' => home_url( '/' ) ];
-
-        if ( is_singular( 'post' ) ) {
-            // Используем основную рубрику
-            $primary_id = My_SEO_Primary_Term::get_primary( get_queried_object_id(), 'category' );
-            if ( $primary_id ) {
-                $term = get_term( $primary_id );
-                if ( $term && ! is_wp_error( $term ) ) {
-                    $items[] = [
-                        '@type'    => 'ListItem',
-                        'position' => $pos++,
-                        'name'     => $term->name,
-                        'item'     => get_term_link( $term ),
-                    ];
-                }
-            }
-            $items[] = [ '@type' => 'ListItem', 'position' => $pos++, 'name' => get_the_title() ];
-        } elseif ( is_page() ) {
-            $items[] = [ '@type' => 'ListItem', 'position' => $pos++, 'name' => get_the_title() ];
-        } elseif ( is_category() || is_tag() || is_tax() ) {
-            $items[] = [ '@type' => 'ListItem', 'position' => $pos++, 'name' => single_term_title( '', false ) ];
-        } elseif ( is_post_type_archive() ) {
-            $items[] = [ '@type' => 'ListItem', 'position' => $pos++, 'name' => post_type_archive_title( '', false ) ];
-        }
-
-        return [ '@type' => 'BreadcrumbList', 'itemListElement' => $items ];
     }
 }

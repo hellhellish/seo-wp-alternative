@@ -6,64 +6,305 @@ class My_SEO_OpenGraph {
     }
 
     public function output() {
-        if ( is_admin() || is_feed() || is_404() ) return;
-
-        $s     = My_SEO_Settings::get();
-        $title = wp_get_document_title();
-        $desc  = $this->get_description();
-        $url   = $this->get_url();
-        $img   = $this->get_image();
-        $type  = is_singular() ? 'article' : 'website';
-
-        echo '<meta property="og:locale" content="' . esc_attr( get_locale() ) . '">' . "\n";
-        echo '<meta property="og:type" content="' . esc_attr( $type ) . '">' . "\n";
-        echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
-        if ( $desc ) echo '<meta property="og:description" content="' . esc_attr( $desc ) . '">' . "\n";
-        echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
-        echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '">' . "\n";
-        if ( $img ) {
-            echo '<meta property="og:image" content="' . esc_url( $img ) . '">' . "\n";
-            echo '<meta property="og:image:width" content="1200">' . "\n";
-            echo '<meta property="og:image:height" content="630">' . "\n";
-        }
-
-        // Twitter
-        echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
-        echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
-        if ( $desc ) echo '<meta name="twitter:description" content="' . esc_attr( $desc ) . '">' . "\n";
-        if ( $img ) echo '<meta name="twitter:image" content="' . esc_url( $img ) . '">' . "\n";
-        if ( $s['twitter_site'] ) {
-            echo '<meta name="twitter:site" content="' . esc_attr( $s['twitter_site'] ) . '">' . "\n";
-        }
-    }
-
-    private function get_description() {
-        if ( is_singular() ) {
-            $post = get_queried_object();
-            $custom = get_post_meta( $post->ID, '_seo_description', true );
-            if ( $custom ) return $custom;
-            $text = has_excerpt( $post ) ? get_the_excerpt( $post ) : $post->post_content;
-            return wp_trim_words( wp_strip_all_tags( $text ), 25, '…' );
-        }
-        if ( is_category() || is_tag() || is_tax() ) {
-            return get_term_meta( get_queried_object_id(), '_seo_description', true ) ?: wp_strip_all_tags( term_description() );
-        }
-        return get_bloginfo( 'description' );
-    }
-
-    private function get_url() {
-        if ( is_singular() ) return get_permalink();
-        if ( is_category() || is_tag() || is_tax() ) return get_term_link( get_queried_object() );
-        if ( is_post_type_archive() ) return get_post_type_archive_link( get_post_type() );
-        if ( is_author() ) return get_author_posts_url( get_queried_object_id() );
-        return home_url( '/' );
-    }
-
-    private function get_image() {
         $s = My_SEO_Settings::get();
-        if ( is_singular() && has_post_thumbnail() ) {
-            return get_the_post_thumbnail_url( null, 'full' );
+        if ( empty( $s['og_enabled'] ) ) {
+            return;
         }
-        return $s['default_og_image'] ?: '';
+
+        $data = $this->collect( $s );
+        if ( empty( $data ) ) {
+            return;
+        }
+
+        echo "\n<!-- My SEO: Open Graph -->\n";
+
+        $this->tag( 'og:locale',      get_locale() );
+        $this->tag( 'og:type',        $data['type'] );
+        $this->tag( 'og:title',       $data['title'] );
+        $this->tag( 'og:description', $data['description'] );
+        $this->tag( 'og:url',         $data['url'] );
+        $this->tag( 'og:site_name',   get_bloginfo( 'name' ) );
+
+        if ( ! empty( $data['image'] ) ) {
+            $this->tag( 'og:image', $data['image'] );
+
+            if ( ! empty( $data['image_width'] ) ) {
+                $this->tag( 'og:image:width', $data['image_width'] );
+            }
+            if ( ! empty( $data['image_height'] ) ) {
+                $this->tag( 'og:image:height', $data['image_height'] );
+            }
+            if ( ! empty( $data['image_type'] ) ) {
+                $this->tag( 'og:image:type', $data['image_type'] );
+            }
+            if ( ! empty( $data['image_alt'] ) ) {
+                $this->tag( 'og:image:alt', $data['image_alt'] );
+            }
+        }
+
+        if ( $data['type'] === 'article' ) {
+            if ( ! empty( $data['published'] ) ) {
+                $this->tag( 'article:published_time', $data['published'] );
+            }
+            if ( ! empty( $data['modified'] ) ) {
+                $this->tag( 'article:modified_time', $data['modified'] );
+            }
+            if ( ! empty( $data['author'] ) ) {
+                $this->tag( 'article:author', $data['author'] );
+            }
+            if ( ! empty( $data['section'] ) ) {
+                $this->tag( 'article:section', $data['section'] );
+            }
+        }
+
+        echo "\n<!-- My SEO: Twitter Card -->\n";
+
+        $this->tag( 'twitter:card',        $s['twitter_card'], 'name' );
+        $this->tag( 'twitter:title',       $data['title'],     'name' );
+        $this->tag( 'twitter:description', $data['description'], 'name' );
+
+        if ( ! empty( $data['image'] ) ) {
+            $this->tag( 'twitter:image', $data['image'], 'name' );
+            if ( ! empty( $data['image_alt'] ) ) {
+                $this->tag( 'twitter:image:alt', $data['image_alt'], 'name' );
+            }
+        }
+        if ( ! empty( $s['twitter_site'] ) ) {
+            $this->tag( 'twitter:site', $s['twitter_site'], 'name' );
+        }
+
+        echo "\n";
+    }
+
+    private function collect( $s ) {
+        $type        = 'website';
+        $url         = '';
+        $title       = '';
+        $description = '';
+        $image       = '';
+        $image_id    = 0;
+        $image_alt   = '';
+        $published   = '';
+        $modified    = '';
+        $author      = '';
+        $section     = '';
+
+        if ( is_singular() ) {
+            $post_id = get_queried_object_id();
+            $post    = get_queried_object();
+
+            $type        = $s['og_type_singular'] === 'website' ? 'website' : 'article';
+            $url         = get_permalink( $post_id );
+            $title       = $this->resolve_title( $post_id );
+            $description = $this->resolve_description( $post_id );
+
+            $img = $this->resolve_image( $post_id );
+            $image     = $img['url'];
+            $image_id  = $img['id'];
+            $image_alt = $img['alt'];
+
+            if ( $type === 'article' && $post instanceof WP_Post ) {
+                $published = get_the_date( 'c', $post );
+                $modified  = get_the_modified_date( 'c', $post );
+                $author    = get_author_posts_url( $post->post_author );
+
+                $primary = My_SEO_Primary_Term::get_primary( $post_id, 'category' );
+                if ( $primary ) {
+                    $term = get_term( $primary );
+                    if ( $term && ! is_wp_error( $term ) ) {
+                        $section = $term->name;
+                    }
+                }
+            }
+        } elseif ( is_category() || is_tag() || is_tax() ) {
+            $term = get_queried_object();
+            if ( $term && ! is_wp_error( $term ) ) {
+                $type        = 'website';
+                $url         = get_term_link( $term );
+                $title       = $this->resolve_term_title( $term );
+                $description = $this->resolve_term_description( $term );
+                $image       = $this->resolve_term_image( $term );
+            }
+        } elseif ( is_author() ) {
+            $user_id     = get_queried_object_id();
+            $type        = 'website';
+            $url         = get_author_posts_url( $user_id );
+            $title       = get_the_author_meta( 'display_name', $user_id );
+            $description = get_the_author_meta( 'description', $user_id );
+        } elseif ( is_post_type_archive() ) {
+            $type        = 'website';
+            $url         = get_post_type_archive_link( get_query_var( 'post_type' ) );
+            $title       = post_type_archive_title( '', false );
+            $description = '';
+        } elseif ( is_home() || is_front_page() ) {
+            $type        = 'website';
+            $url         = home_url( '/' );
+            $title       = get_bloginfo( 'name' );
+            $description = get_bloginfo( 'description' );
+        } else {
+            $type  = 'website';
+            $url   = home_url( add_query_arg( [] ) );
+            $title = wp_get_document_title();
+        }
+
+        if ( $title === '' ) {
+            $title = wp_get_document_title();
+        }
+
+        if ( $image === '' && ! empty( $s['default_og_image'] ) ) {
+            $image = $s['default_og_image'];
+        }
+
+        if ( $image_alt === '' && $title !== '' ) {
+            $image_alt = $title;
+        }
+
+        $meta = $this->image_meta( $image, $image_id );
+
+        return [
+            'type'         => $type,
+            'url'          => $url,
+            'title'        => $title,
+            'description'  => $description,
+            'image'        => $image,
+            'image_width'  => $meta['width'],
+            'image_height' => $meta['height'],
+            'image_type'   => $meta['type'],
+            'image_alt'    => $image_alt,
+            'published'    => $published,
+            'modified'     => $modified,
+            'author'       => $author,
+            'section'      => $section,
+        ];
+    }
+
+    private function resolve_title( $post_id ) {
+        $seo = get_post_meta( $post_id, '_seo_title', true );
+        if ( $seo !== '' ) {
+            return $seo;
+        }
+        return get_the_title( $post_id );
+    }
+
+    private function resolve_description( $post_id ) {
+        $seo = get_post_meta( $post_id, '_seo_description', true );
+        if ( $seo !== '' ) {
+            return $seo;
+        }
+        $excerpt = get_the_excerpt( $post_id );
+        return wp_strip_all_tags( $excerpt );
+    }
+
+    /**
+     * Каскад: _seo_og_image → featured image.
+     * Возвращает url, attachment ID (если есть) и alt.
+     */
+    private function resolve_image( $post_id ) {
+        $custom = get_post_meta( $post_id, '_seo_og_image', true );
+        if ( $custom !== '' ) {
+            return [ 'url' => $custom, 'id' => 0, 'alt' => '' ];
+        }
+        if ( has_post_thumbnail( $post_id ) ) {
+            $thumb_id = (int) get_post_thumbnail_id( $post_id );
+            $url      = get_the_post_thumbnail_url( $post_id, 'full' );
+            $alt      = (string) get_post_meta( $thumb_id, '_wp_attachment_image_alt', true );
+            return [ 'url' => $url, 'id' => $thumb_id, 'alt' => $alt ];
+        }
+        return [ 'url' => '', 'id' => 0, 'alt' => '' ];
+    }
+
+    private function resolve_term_title( $term ) {
+        $seo = get_term_meta( $term->term_id, '_seo_title', true );
+        if ( $seo !== '' ) {
+            return $seo;
+        }
+        return $term->name;
+    }
+
+    private function resolve_term_description( $term ) {
+        $seo = get_term_meta( $term->term_id, '_seo_description', true );
+        if ( $seo !== '' ) {
+            return $seo;
+        }
+        return wp_strip_all_tags( $term->description );
+    }
+
+    private function resolve_term_image( $term ) {
+        $custom = get_term_meta( $term->term_id, '_seo_og_image', true );
+        if ( $custom !== '' ) {
+            return $custom;
+        }
+        return '';
+    }
+
+    /**
+     * Определяет width/height/type картинки.
+     *
+     * Если это attachment — берём из метаданных WP (быстро, точно).
+     * Если это внешний URL — пробуем getimagesize() с коротким timeout.
+     * Если не получилось — возвращаем пустые значения,
+     * чтобы не соврать в OG-тегах.
+     */
+    private function image_meta( $image, $image_id ) {
+        $out = [ 'width' => '', 'height' => '', 'type' => '' ];
+
+        if ( $image === '' ) {
+            return $out;
+        }
+
+        if ( $image_id > 0 ) {
+            $src = wp_get_attachment_image_src( $image_id, 'full' );
+            if ( $src ) {
+                $out['width']  = (string) $src[1];
+                $out['height'] = (string) $src[2];
+            }
+            $mime = get_post_mime_type( $image_id );
+            if ( $mime ) {
+                $out['type'] = $mime;
+            }
+            return $out;
+        }
+
+        if ( ! preg_match( '#^https?://#i', $image ) ) {
+            return $out;
+        }
+
+        $response = wp_remote_head( $image, [ 'timeout' => 3 ] );
+        if ( is_wp_error( $response ) ) {
+            return $out;
+        }
+
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        if ( $code < 200 || $code >= 400 ) {
+            return $out;
+        }
+
+        $content_type = wp_remote_retrieve_header( $response, 'content-type' );
+        if ( $content_type ) {
+            $out['type'] = $content_type;
+        }
+
+        $size = @getimagesize( $image );
+        if ( is_array( $size ) ) {
+            $out['width']  = (string) $size[0];
+            $out['height'] = (string) $size[1];
+            if ( empty( $out['type'] ) && ! empty( $size['mime'] ) ) {
+                $out['type'] = $size['mime'];
+            }
+        }
+
+        return $out;
+    }
+
+    private function tag( $property, $content, $attr = 'property' ) {
+        if ( $content === '' || $content === null ) {
+            return;
+        }
+        printf(
+            '<meta %s="%s" content="%s" />' . "\n",
+            esc_attr( $attr ),
+            esc_attr( $property ),
+            esc_attr( $content )
+        );
     }
 }

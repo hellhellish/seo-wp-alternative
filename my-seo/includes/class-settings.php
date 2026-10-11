@@ -14,12 +14,32 @@ class My_SEO_Settings {
             'noindex_category'    => 0,
             'noindex_cpt_archive' => 0,
             'noindex_paginated'   => 0,
+
+            'site_alt_name'       => '',
             'default_og_image'    => '',
-            'org_logo'            => '',
+
             'org_name'            => '',
+            'org_alt_name'        => '',
+            'org_logo'            => '',
+            'org_description'     => '',
+            'org_email'           => '',
+            'org_phone'           => '',
+            'org_legal_name'      => '',
+            'org_founding_date'   => '',
+            'org_employees'       => '',
+
+            'social_telegram'     => '',
+            'social_vk'           => '',
+            'social_youtube'      => '',
             'twitter_site'        => '',
 
-            // Feed
+            'og_enabled'          => 1,
+            'twitter_card'        => 'summary_large_image',
+            'og_type_singular'    => 'article',
+
+            'google_verification' => '',
+            'yandex_verification' => '',
+
             'feed_enabled'        => 0,
             'feed_token'          => '',
             'feed_per_page'       => 100,
@@ -35,9 +55,6 @@ class My_SEO_Settings {
         update_option( self::OPTION, array_merge( $opts, $data ) );
     }
 
-    /**
-     * Генерирует токен, если его нет.
-     */
     public static function ensure_token() {
         $opts = self::get();
         if ( empty( $opts['feed_token'] ) ) {

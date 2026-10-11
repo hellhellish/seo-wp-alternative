@@ -2,12 +2,12 @@
 /**
  * Plugin Name: My SEO
  * Description: Самописная замена Yoast SEO
- * Version: 2.1.0
+ * Version: 2.4.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'MY_SEO_VERSION', '2.1.0' );
+define( 'MY_SEO_VERSION', '2.4.0' );
 define( 'MY_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MY_SEO_URL',  plugin_dir_url( __FILE__ ) );
 
@@ -21,6 +21,7 @@ require_once MY_SEO_PATH . 'includes/class-schema.php';
 require_once MY_SEO_PATH . 'includes/class-sitemap.php';
 require_once MY_SEO_PATH . 'includes/class-breadcrumbs.php';
 require_once MY_SEO_PATH . 'includes/class-robots.php';
+require_once MY_SEO_PATH . 'includes/class-verification.php';
 require_once MY_SEO_PATH . 'includes/class-metrics.php';
 require_once MY_SEO_PATH . 'includes/class-feed.php';
 
@@ -39,15 +40,14 @@ add_action( 'plugins_loaded', function () {
     new My_SEO_Schema();
     new My_SEO_Sitemap();
     new My_SEO_Robots();
+    new My_SEO_Verification();
     new My_SEO_Feed();
 
     new My_SEO_Admin_Fields();
     new My_SEO_Term_Fields();
     new My_SEO_User_Fields();
 
-    if ( is_admin() ) {
-        new My_SEO_Settings_Page();
-    }
+    new My_SEO_Settings_Page();
 });
 
 register_activation_hook( __FILE__, function () {

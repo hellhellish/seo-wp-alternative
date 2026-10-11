@@ -16,10 +16,11 @@ class My_SEO_Admin_Fields {
     public function render( $post ) {
         wp_nonce_field( 'my_seo_save', 'my_seo_nonce' );
 
-        $title  = get_post_meta( $post->ID, '_seo_title', true );
-        $desc   = get_post_meta( $post->ID, '_seo_description', true );
-        $robots = get_post_meta( $post->ID, '_seo_robots', true ) ?: 'index,follow';
-        $canon  = get_post_meta( $post->ID, '_seo_canonical', true );
+        $title   = get_post_meta( $post->ID, '_seo_title', true );
+        $desc    = get_post_meta( $post->ID, '_seo_description', true );
+        $robots  = get_post_meta( $post->ID, '_seo_robots', true ) ?: 'index,follow';
+        $canon   = get_post_meta( $post->ID, '_seo_canonical', true );
+        $og_img  = get_post_meta( $post->ID, '_seo_og_image', true );
 
         echo '<div class="my-seo-box">';
         echo '<p><label><strong>SEO Title</strong><br><input type="text" name="seo_title" value="' . esc_attr( $title ) . '" class="widefat" maxlength="70"></label></p>';
@@ -33,10 +34,12 @@ class My_SEO_Admin_Fields {
 
         echo '<p><label><strong>Canonical URL</strong> <small>(оставьте пустым для авто)</small><br><input type="url" name="seo_canonical" value="' . esc_attr( $canon ) . '" class="widefat"></label></p>';
 
-        // Селект основной таксономии
+        echo '<p><label><strong>OG Image</strong> <small>(URL, для соцсетей; если пусто — featured image или дефолтная из настроек)</small><br><input type="url" name="seo_og_image" value="' . esc_attr( $og_img ) . '" class="widefat"></label></p>';
+
         $taxonomies = get_object_taxonomies( $post->post_type, 'objects' );
         foreach ( $taxonomies as $tax ) {
-            if ( ! $tax->public || ! $tax->hierarchical && $tax->name !== 'post_tag' ) continue;
+            if ( ! $tax->public ) continue;
+            if ( ! $tax->hierarchical && $tax->name !== 'post_tag' ) continue;
 
             $terms = wp_get_post_terms( $post->ID, $tax->name );
             if ( empty( $terms ) || is_wp_error( $terms ) ) continue;
@@ -60,16 +63,22 @@ class My_SEO_Admin_Fields {
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-        foreach ( [ 'seo_title', 'seo_description', 'seo_robots', 'seo_canonical' ] as $field ) {
+        $text_fields = [ 'seo_title', 'seo_description', 'seo_robots' ];
+        foreach ( $text_fields as $field ) {
             if ( isset( $_POST[ $field ] ) ) {
-                $val = $field === 'seo_canonical'
-                    ? esc_url_raw( $_POST[ $field ] )
-                    : sanitize_text_field( $_POST[ $field ] );
+                $val = sanitize_text_field( $_POST[ $field ] );
                 if ( $val === '' ) delete_post_meta( $post_id, '_' . $field );
                 else update_post_meta( $post_id, '_' . $field, $val );
             }
         }
 
-        // Primary term save здесь не нужен — этим занимается My_SEO_Primary_Term::save_primary_terms
+        $url_fields = [ 'seo_canonical', 'seo_og_image' ];
+        foreach ( $url_fields as $field ) {
+            if ( isset( $_POST[ $field ] ) ) {
+                $val = esc_url_raw( $_POST[ $field ] );
+                if ( $val === '' ) delete_post_meta( $post_id, '_' . $field );
+                else update_post_meta( $post_id, '_' . $field, $val );
+            }
+        }
     }
 }
