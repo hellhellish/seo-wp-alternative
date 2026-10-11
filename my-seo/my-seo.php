@@ -19,7 +19,6 @@ require_once MY_SEO_PATH . 'includes/class-meta-tags.php';
 require_once MY_SEO_PATH . 'includes/class-opengraph.php';
 require_once MY_SEO_PATH . 'includes/class-schema.php';
 require_once MY_SEO_PATH . 'includes/class-sitemap.php';
-require_once MY_SEO_PATH . 'includes/class-breadcrumbs.php';
 require_once MY_SEO_PATH . 'includes/class-robots.php';
 require_once MY_SEO_PATH . 'includes/class-verification.php';
 require_once MY_SEO_PATH . 'includes/class-metrics.php';
