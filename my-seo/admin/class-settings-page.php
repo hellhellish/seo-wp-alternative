@@ -15,7 +15,6 @@ class My_SEO_Settings_Page {
             'connections' => 'Подключения к сайту',
             'indexing'    => 'Индексация',
             'og'          => 'Open Graph / Twitter',
-            'sitemap'     => 'Sitemap',
             'feed'        => 'Фид аудита',
             'migration'   => 'Миграция',
         ];
@@ -102,30 +101,27 @@ class My_SEO_Settings_Page {
                 }
                 break;
 
-case 'og':
-    $urls = [ 'default_og_image', 'social_telegram', 'social_vk', 'social_youtube' ];
-    foreach ( $urls as $k ) {
-        if ( isset( $input[ $k ] ) ) {
-            $out[ $k ] = esc_url_raw( $input[ $k ] );
-        }
-    }
-    if ( isset( $input['twitter_site'] ) ) {
-        $out['twitter_site'] = sanitize_text_field( $input['twitter_site'] );
-    }
-    if ( isset( $input['og_enabled'] ) ) {
-        $out['og_enabled'] = ! empty( $input['og_enabled'] ) ? 1 : 0;
-    }
-    if ( isset( $input['twitter_card'] ) ) {
-        $card = sanitize_key( $input['twitter_card'] );
-        $out['twitter_card'] = in_array( $card, [ 'summary', 'summary_large_image' ], true ) ? $card : 'summary_large_image';
-    }
-    if ( isset( $input['og_type_singular'] ) ) {
-        $type = sanitize_key( $input['og_type_singular'] );
-        $out['og_type_singular'] = in_array( $type, [ 'article', 'website' ], true ) ? $type : 'article';
-    }
-    break;
-
-            case 'sitemap':
+            case 'og':
+                $urls = [ 'default_og_image', 'social_telegram', 'social_vk', 'social_youtube' ];
+                foreach ( $urls as $k ) {
+                    if ( isset( $input[ $k ] ) ) {
+                        $out[ $k ] = esc_url_raw( $input[ $k ] );
+                    }
+                }
+                if ( isset( $input['twitter_site'] ) ) {
+                    $out['twitter_site'] = sanitize_text_field( $input['twitter_site'] );
+                }
+                if ( isset( $input['og_enabled'] ) ) {
+                    $out['og_enabled'] = ! empty( $input['og_enabled'] ) ? 1 : 0;
+                }
+                if ( isset( $input['twitter_card'] ) ) {
+                    $card = sanitize_key( $input['twitter_card'] );
+                    $out['twitter_card'] = in_array( $card, [ 'summary', 'summary_large_image' ], true ) ? $card : 'summary_large_image';
+                }
+                if ( isset( $input['og_type_singular'] ) ) {
+                    $type = sanitize_key( $input['og_type_singular'] );
+                    $out['og_type_singular'] = in_array( $type, [ 'article', 'website' ], true ) ? $type : 'article';
+                }
                 break;
 
             case 'feed':
@@ -210,7 +206,6 @@ case 'og':
                         case 'connections': $this->tab_connections( $s ); break;
                         case 'indexing':    $this->tab_indexing( $s );    break;
                         case 'og':          $this->tab_og( $s );          break;
-                        case 'sitemap':     $this->tab_sitemap( $s );     break;
                         case 'feed':        $this->tab_feed( $s );        break;
                     }
                     ?>
@@ -410,113 +405,102 @@ case 'og':
         <?php
     }
 
-private function tab_og( $s ) {
-    ?>
-    <p>Настройки Open Graph, Twitter Card и профили в соцсетях.</p>
-
-    <table class="form-table" role="presentation">
-        <tr>
-            <th scope="row">Open Graph</th>
-            <td>
-                <label>
-                    <input type="checkbox"
-                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[og_enabled]"
-                           value="1" <?php checked( ! empty( $s['og_enabled'] ) ); ?>>
-                    Выводить OG и Twitter теги
-                </label>
-                <p class="description">Снимите галочку, чтобы временно отключить вывод.</p>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="my_seo_default_og_image">Дефолтная OG-картинка (URL)</label></th>
-            <td>
-                <input type="url" class="regular-text"
-                       id="my_seo_default_og_image"
-                       name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[default_og_image]"
-                       value="<?php echo esc_attr( $s['default_og_image'] ); ?>">
-                <p class="description">Fallback, если у записи/термина нет своей картинки. Рекомендуется 1200×675.</p>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="my_seo_og_type_singular">OG type для записей</label></th>
-            <td>
-                <select id="my_seo_og_type_singular"
-                        name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[og_type_singular]">
-                    <option value="article" <?php selected( $s['og_type_singular'], 'article' ); ?>>article</option>
-                    <option value="website" <?php selected( $s['og_type_singular'], 'website' ); ?>>website</option>
-                </select>
-                <p class="description">Для остальных страниц (главная, архивы, термины) всегда <code>website</code>.</p>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="my_seo_twitter_card">Тип Twitter Card</label></th>
-            <td>
-                <select id="my_seo_twitter_card"
-                        name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[twitter_card]">
-                    <option value="summary_large_image" <?php selected( $s['twitter_card'], 'summary_large_image' ); ?>>summary_large_image</option>
-                    <option value="summary" <?php selected( $s['twitter_card'], 'summary' ); ?>>summary</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="my_seo_twitter_site">Twitter / X аккаунт</label></th>
-            <td>
-                <input type="text" class="regular-text"
-                       id="my_seo_twitter_site"
-                       name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[twitter_site]"
-                       value="<?php echo esc_attr( $s['twitter_site'] ); ?>"
-                       placeholder="@example">
-                <p class="description">Идёт в <code>twitter:site</code>.</p>
-            </td>
-        </tr>
-    </table>
-
-    <h2>Соцсети</h2>
-    <p>Заполненные профили идут в Schema <code>Organization.sameAs</code>.</p>
-
-    <table class="form-table" role="presentation">
-        <tr>
-            <th scope="row"><label for="my_seo_social_telegram">Telegram</label></th>
-            <td>
-                <input type="url" class="regular-text"
-                       id="my_seo_social_telegram"
-                       name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[social_telegram]"
-                       value="<?php echo esc_attr( $s['social_telegram'] ); ?>"
-                       placeholder="https://t.me/...">
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="my_seo_social_vk">VK</label></th>
-            <td>
-                <input type="url" class="regular-text"
-                       id="my_seo_social_vk"
-                       name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[social_vk]"
-                       value="<?php echo esc_attr( $s['social_vk'] ); ?>"
-                       placeholder="https://vk.com/...">
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="my_seo_social_youtube">YouTube</label></th>
-            <td>
-                <input type="url" class="regular-text"
-                       id="my_seo_social_youtube"
-                       name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[social_youtube]"
-                       value="<?php echo esc_attr( $s['social_youtube'] ); ?>"
-                       placeholder="https://youtube.com/@...">
-            </td>
-        </tr>
-    </table>
-    <?php
-}
-
-    private function tab_sitemap( $s ) {
+    private function tab_og( $s ) {
         ?>
-        <p>XML sitemap доступен по адресу
-           <a href="<?php echo esc_url( home_url( '/sitemap_index.xml' ) ); ?>" target="_blank" rel="noopener">
-               <?php echo esc_html( home_url( '/sitemap_index.xml' ) ); ?>
-           </a>.
-        </p>
-        <p class="description">Настроек пока нет — задел на будущее.</p>
+        <p>Настройки Open Graph, Twitter Card и профили в соцсетях.</p>
+
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row">Open Graph</th>
+                <td>
+                    <label>
+                        <input type="checkbox"
+                               name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[og_enabled]"
+                               value="1" <?php checked( ! empty( $s['og_enabled'] ) ); ?>>
+                        Выводить OG и Twitter теги
+                    </label>
+                    <p class="description">Снимите галочку, чтобы временно отключить вывод.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_default_og_image">Дефолтная OG-картинка (URL)</label></th>
+                <td>
+                    <input type="url" class="regular-text"
+                           id="my_seo_default_og_image"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[default_og_image]"
+                           value="<?php echo esc_attr( $s['default_og_image'] ); ?>">
+                    <p class="description">Fallback, если у записи/термина нет своей картинки. Рекомендуется 1200×675.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_og_type_singular">OG type для записей</label></th>
+                <td>
+                    <select id="my_seo_og_type_singular"
+                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[og_type_singular]">
+                        <option value="article" <?php selected( $s['og_type_singular'], 'article' ); ?>>article</option>
+                        <option value="website" <?php selected( $s['og_type_singular'], 'website' ); ?>>website</option>
+                    </select>
+                    <p class="description">Для остальных страниц (главная, архивы, термины) всегда <code>website</code>.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_twitter_card">Тип Twitter Card</label></th>
+                <td>
+                    <select id="my_seo_twitter_card"
+                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[twitter_card]">
+                        <option value="summary_large_image" <?php selected( $s['twitter_card'], 'summary_large_image' ); ?>>summary_large_image</option>
+                        <option value="summary" <?php selected( $s['twitter_card'], 'summary' ); ?>>summary</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_twitter_site">Twitter / X аккаунт</label></th>
+                <td>
+                    <input type="text" class="regular-text"
+                           id="my_seo_twitter_site"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[twitter_site]"
+                           value="<?php echo esc_attr( $s['twitter_site'] ); ?>"
+                           placeholder="@example">
+                    <p class="description">Идёт в <code>twitter:site</code>.</p>
+                </td>
+            </tr>
+        </table>
+
+        <h2>Соцсети</h2>
+        <p>Заполненные профили идут в Schema <code>Organization.sameAs</code>.</p>
+
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row"><label for="my_seo_social_telegram">Telegram</label></th>
+                <td>
+                    <input type="url" class="regular-text"
+                           id="my_seo_social_telegram"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[social_telegram]"
+                           value="<?php echo esc_attr( $s['social_telegram'] ); ?>"
+                           placeholder="https://t.me/...">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_social_vk">VK</label></th>
+                <td>
+                    <input type="url" class="regular-text"
+                           id="my_seo_social_vk"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[social_vk]"
+                           value="<?php echo esc_attr( $s['social_vk'] ); ?>"
+                           placeholder="https://vk.com/...">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_social_youtube">YouTube</label></th>
+                <td>
+                    <input type="url" class="regular-text"
+                           id="my_seo_social_youtube"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[social_youtube]"
+                           value="<?php echo esc_attr( $s['social_youtube'] ); ?>"
+                           placeholder="https://youtube.com/@...">
+                </td>
+            </tr>
+        </table>
         <?php
     }
 

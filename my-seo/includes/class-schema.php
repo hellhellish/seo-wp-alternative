@@ -80,14 +80,23 @@ class My_SEO_Schema {
             'url'         => home_url( '/' ),
             'name'        => get_bloginfo( 'name' ),
             'description' => get_bloginfo( 'description' ),
-            'inLanguage'  => get_locale(),
+            'inLanguage'  => str_replace( '_', '-', get_locale() ),
             'publisher'   => [ '@id' => home_url( '/#organization' ) ],
-            'potentialAction' => [
-                '@type'       => 'SearchAction',
-                'target'      => [ '@type' => 'EntryPoint', 'urlTemplate' => home_url( '/?s={search_term_string}' ) ],
-                'query-input' => 'required name=search_term_string',
-            ],
         ];
+
+        // SearchAction выводим только если поиск открыт для индексации.
+        // Google требует, чтобы страница поиска была доступна,
+        // если она указана в potentialAction.
+        if ( empty( $s['noindex_search'] ) ) {
+            $node['potentialAction'] = [
+                '@type'       => 'SearchAction',
+                'target'      => [
+                    '@type'       => 'EntryPoint',
+                    'urlTemplate' => home_url( '/?s={search_term_string}' ),
+                ],
+                'query-input' => 'required name=search_term_string',
+            ];
+        }
 
         if ( ! empty( $s['site_alt_name'] ) ) {
             $node['alternativeName'] = $s['site_alt_name'];

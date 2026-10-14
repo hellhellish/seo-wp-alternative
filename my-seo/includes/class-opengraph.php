@@ -89,7 +89,29 @@ class My_SEO_OpenGraph {
         $author      = '';
         $section     = '';
 
-        if ( is_singular() ) {
+        // Фронт-пейдж и home — всегда website
+        if ( is_front_page() || is_home() ) {
+            $type        = 'website';
+            $url         = home_url( '/' );
+            $title       = get_bloginfo( 'name' );
+            $description = get_bloginfo( 'description' );
+
+            $page_id = 0;
+            if ( is_front_page() && ! is_home() ) {
+                $page_id = (int) get_option( 'page_on_front' );
+            } elseif ( is_home() ) {
+                $page_id = (int) get_option( 'page_for_posts' );
+            }
+
+            if ( $page_id ) {
+                $img       = $this->resolve_image( $page_id );
+                $image     = $img['url'];
+                $image_id  = $img['id'];
+                $image_alt = $img['alt'];
+            }
+        }
+        // Посты и CPT (кроме page) — article или website (из настроек)
+        elseif ( is_singular() && ! is_page() ) {
             $post_id = get_queried_object_id();
             $post    = get_queried_object();
 
@@ -98,7 +120,7 @@ class My_SEO_OpenGraph {
             $title       = $this->resolve_title( $post_id );
             $description = $this->resolve_description( $post_id );
 
-            $img = $this->resolve_image( $post_id );
+            $img       = $this->resolve_image( $post_id );
             $image     = $img['url'];
             $image_id  = $img['id'];
             $image_alt = $img['alt'];
@@ -116,7 +138,21 @@ class My_SEO_OpenGraph {
                     }
                 }
             }
-        } elseif ( is_category() || is_tag() || is_tax() ) {
+        }
+        // Страницы — всегда website
+        elseif ( is_page() ) {
+            $page_id     = get_queried_object_id();
+            $type        = 'website';
+            $url         = get_permalink( $page_id );
+            $title       = $this->resolve_title( $page_id );
+            $description = $this->resolve_description( $page_id );
+
+            $img       = $this->resolve_image( $page_id );
+            $image     = $img['url'];
+            $image_id  = $img['id'];
+            $image_alt = $img['alt'];
+        }
+        elseif ( is_category() || is_tag() || is_tax() ) {
             $term = get_queried_object();
             if ( $term && ! is_wp_error( $term ) ) {
                 $type        = 'website';
@@ -125,23 +161,26 @@ class My_SEO_OpenGraph {
                 $description = $this->resolve_term_description( $term );
                 $image       = $this->resolve_term_image( $term );
             }
-        } elseif ( is_author() ) {
+        }
+        elseif ( is_author() ) {
             $user_id     = get_queried_object_id();
             $type        = 'website';
             $url         = get_author_posts_url( $user_id );
             $title       = get_the_author_meta( 'display_name', $user_id );
             $description = get_the_author_meta( 'description', $user_id );
-        } elseif ( is_post_type_archive() ) {
+
+            $img       = $this->resolve_author_image( $user_id );
+            $image     = $img['url'];
+            $image_id  = $img['id'];
+            $image_alt = $img['alt'];
+        }
+        elseif ( is_post_type_archive() ) {
             $type        = 'website';
             $url         = get_post_type_archive_link( get_query_var( 'post_type' ) );
             $title       = post_type_archive_title( '', false );
             $description = '';
-        } elseif ( is_home() || is_front_page() ) {
-            $type        = 'website';
-            $url         = home_url( '/' );
-            $title       = get_bloginfo( 'name' );
-            $description = get_bloginfo( 'description' );
-        } else {
+        }
+        else {
             $type  = 'website';
             $url   = home_url( add_query_arg( [] ) );
             $title = wp_get_document_title();
@@ -152,7 +191,9 @@ class My_SEO_OpenGraph {
         }
 
         if ( $image === '' && ! empty( $s['default_og_image'] ) ) {
-            $image = $s['default_og_image'];
+            $image     = $s['default_og_image'];
+            $image_id  = 0;
+            $image_alt = '';
         }
 
         if ( $image_alt === '' && $title !== '' ) {
@@ -195,10 +236,6 @@ class My_SEO_OpenGraph {
         return wp_strip_all_tags( $excerpt );
     }
 
-    /**
-     * Каскад: _seo_og_image → featured image.
-     * Возвращает url, attachment ID (если есть) и alt.
-     */
     private function resolve_image( $post_id ) {
         $custom = get_post_meta( $post_id, '_seo_og_image', true );
         if ( $custom !== '' ) {
@@ -237,14 +274,24 @@ class My_SEO_OpenGraph {
         return '';
     }
 
-    /**
-     * Определяет width/height/type картинки.
-     *
-     * Если это attachment — берём из метаданных WP (быстро, точно).
-     * Если это внешний URL — пробуем getimagesize() с коротким timeout.
-     * Если не получилось — возвращаем пустые значения,
-     * чтобы не соврать в OG-тегах.
-     */
+    private function resolve_author_image( $user_id ) {
+        $custom = get_user_meta( $user_id, '_seo_og_image', true );
+        if ( $custom !== '' ) {
+            return [ 'url' => $custom, 'id' => 0, 'alt' => '' ];
+        }
+
+        $avatar_url = get_avatar_url( $user_id, [ 'size' => 512 ] );
+        if ( $avatar_url ) {
+            return [
+                'url' => $avatar_url,
+                'id'  => 0,
+                'alt' => get_the_author_meta( 'display_name', $user_id ),
+            ];
+        }
+
+        return [ 'url' => '', 'id' => 0, 'alt' => '' ];
+    }
+
     private function image_meta( $image, $image_id ) {
         $out = [ 'width' => '', 'height' => '', 'type' => '' ];
 

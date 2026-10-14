@@ -13,7 +13,7 @@ class My_SEO_Settings {
             'noindex_tag'         => 0,
             'noindex_category'    => 0,
             'noindex_cpt_archive' => 0,
-            'noindex_paginated'   => 0,
+            'noindex_paginated'   => 1,
 
             'site_alt_name'       => '',
             'default_og_image'    => '',

@@ -14,6 +14,7 @@ class My_SEO_User_Fields {
         $desc   = get_user_meta( $user->ID, '_seo_description', true );
         $robots = get_user_meta( $user->ID, '_seo_robots', true );
         $canon  = get_user_meta( $user->ID, '_seo_canonical', true );
+        $og_img = get_user_meta( $user->ID, '_seo_og_image', true );
         ?>
         <h2>SEO</h2>
         <table class="form-table">
@@ -32,6 +33,11 @@ class My_SEO_User_Fields {
                         <?php endforeach; ?>
                     </select>
                 </td></tr>
+            <tr><th><label>OG Image (URL)</label></th>
+                <td>
+                    <input type="url" name="seo_og_image" value="<?php echo esc_attr( $og_img ); ?>" class="regular-text">
+                    <p class="description">Если пусто — используется аватар автора.</p>
+                </td></tr>
         </table>
         <?php
     }
@@ -47,10 +53,14 @@ class My_SEO_User_Fields {
                 else update_user_meta( $user_id, '_' . $f, $val );
             }
         }
-        if ( isset( $_POST['seo_canonical'] ) ) {
-            $val = esc_url_raw( $_POST['seo_canonical'] );
-            if ( $val === '' ) delete_user_meta( $user_id, '_seo_canonical' );
-            else update_user_meta( $user_id, '_seo_canonical', $val );
+
+        $url_fields = [ 'seo_canonical', 'seo_og_image' ];
+        foreach ( $url_fields as $f ) {
+            if ( isset( $_POST[ $f ] ) ) {
+                $val = esc_url_raw( $_POST[ $f ] );
+                if ( $val === '' ) delete_user_meta( $user_id, '_' . $f );
+                else update_user_meta( $user_id, '_' . $f, $val );
+            }
         }
     }
 }

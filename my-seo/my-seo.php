@@ -2,12 +2,12 @@
 /**
  * Plugin Name: My SEO
  * Description: Самописная замена Yoast SEO
- * Version: 2.4.0
+ * Version: 2.5.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'MY_SEO_VERSION', '2.4.0' );
+define( 'MY_SEO_VERSION', '2.5.4' );
 define( 'MY_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MY_SEO_URL',  plugin_dir_url( __FILE__ ) );
 
@@ -18,8 +18,6 @@ require_once MY_SEO_PATH . 'includes/class-noindex.php';
 require_once MY_SEO_PATH . 'includes/class-meta-tags.php';
 require_once MY_SEO_PATH . 'includes/class-opengraph.php';
 require_once MY_SEO_PATH . 'includes/class-schema.php';
-require_once MY_SEO_PATH . 'includes/class-sitemap.php';
-require_once MY_SEO_PATH . 'includes/class-robots.php';
 require_once MY_SEO_PATH . 'includes/class-verification.php';
 require_once MY_SEO_PATH . 'includes/class-metrics.php';
 require_once MY_SEO_PATH . 'includes/class-feed.php';
@@ -37,8 +35,6 @@ add_action( 'plugins_loaded', function () {
     new My_SEO_Meta_Tags();
     new My_SEO_OpenGraph();
     new My_SEO_Schema();
-    new My_SEO_Sitemap();
-    new My_SEO_Robots();
     new My_SEO_Verification();
     new My_SEO_Feed();
 
@@ -48,12 +44,6 @@ add_action( 'plugins_loaded', function () {
 
     new My_SEO_Settings_Page();
 });
-
-register_activation_hook( __FILE__, function () {
-    My_SEO_Sitemap::add_rewrite();
-    flush_rewrite_rules();
-});
-register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
 
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
     if ( in_array( $hook, [ 'post.php', 'post-new.php' ], true ) ) {
