@@ -1,5 +1,4 @@
 jQuery(function($){
-    // Счётчик символов для title/description
     $('.my-seo-box input[name="seo_title"], .my-seo-box textarea[name="seo_description"]').on('input', function(){
         var max = parseInt($(this).attr('maxlength'), 10);
         var len = $(this).val().length;

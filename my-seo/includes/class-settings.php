@@ -20,13 +20,26 @@ class My_SEO_Settings {
 
             'org_name'            => '',
             'org_alt_name'        => '',
+            'org_legal_name'      => '',
             'org_logo'            => '',
+            'org_logo_width'      => '',
+            'org_logo_height'     => '',
+            'org_image'           => '',
             'org_description'     => '',
             'org_email'           => '',
             'org_phone'           => '',
-            'org_legal_name'      => '',
             'org_founding_date'   => '',
+            'org_founding_location'=> '',
             'org_employees'       => '',
+            'org_slogan'          => '',
+
+            'org_address_street'  => '',
+            'org_address_city'    => '',
+            'org_address_region'  => '',
+            'org_address_postal'  => '',
+            'org_address_country' => 'RU',
+
+            'org_area_served'     => '',
 
             'social_telegram'     => '',
             'social_vk'           => '',

@@ -8,7 +8,7 @@ class My_SEO_Schema {
     public function output() {
         $s = My_SEO_Settings::get();
 
-        $graph = [];
+        $graph   = [];
         $graph[] = $this->organization( $s );
         $graph[] = $this->website( $s );
 
@@ -38,11 +38,23 @@ class My_SEO_Schema {
         if ( ! empty( $s['org_legal_name'] ) ) {
             $node['legalName'] = $s['org_legal_name'];
         }
+
         if ( ! empty( $s['org_logo'] ) ) {
-            $node['logo'] = [ '@type' => 'ImageObject', 'url' => $s['org_logo'] ];
+            $logo = [ '@type' => 'ImageObject', 'url' => $s['org_logo'] ];
+            if ( ! empty( $s['org_logo_width'] ) )  $logo['width']  = (int) $s['org_logo_width'];
+            if ( ! empty( $s['org_logo_height'] ) ) $logo['height'] = (int) $s['org_logo_height'];
+            $node['logo'] = $logo;
         }
+
+        if ( ! empty( $s['org_image'] ) ) {
+            $node['image'] = $s['org_image'];
+        }
+
         if ( ! empty( $s['org_description'] ) ) {
             $node['description'] = $s['org_description'];
+        }
+        if ( ! empty( $s['org_slogan'] ) ) {
+            $node['slogan'] = $s['org_slogan'];
         }
         if ( ! empty( $s['org_email'] ) ) {
             $node['email'] = $s['org_email'];
@@ -53,11 +65,27 @@ class My_SEO_Schema {
         if ( ! empty( $s['org_founding_date'] ) ) {
             $node['foundingDate'] = $s['org_founding_date'];
         }
+        if ( ! empty( $s['org_founding_location'] ) ) {
+            $node['foundingLocation'] = [
+                '@type' => 'Place',
+                'name'  => $s['org_founding_location'],
+            ];
+        }
         if ( ! empty( $s['org_employees'] ) ) {
             $node['numberOfEmployees'] = [
                 '@type' => 'QuantitativeValue',
                 'value' => $s['org_employees'],
             ];
+        }
+
+        $address = $this->build_address( $s );
+        if ( $address ) {
+            $node['address'] = $address;
+        }
+
+        $area = $this->build_area_served( $s['org_area_served'] );
+        if ( $area ) {
+            $node['areaServed'] = $area;
         }
 
         $same_as = [];
@@ -73,6 +101,46 @@ class My_SEO_Schema {
         return $node;
     }
 
+    private function build_address( $s ) {
+        $street = trim( (string) $s['org_address_street'] );
+        $city   = trim( (string) $s['org_address_city'] );
+        $region = trim( (string) $s['org_address_region'] );
+        $postal = trim( (string) $s['org_address_postal'] );
+        $country= trim( (string) $s['org_address_country'] );
+
+        if ( $street === '' && $city === '' && $region === '' && $postal === '' ) {
+            return null;
+        }
+
+        $addr = [ '@type' => 'PostalAddress' ];
+
+        if ( $street !== '' )  $addr['streetAddress']   = $street;
+        if ( $city !== '' )    $addr['addressLocality'] = $city;
+        if ( $region !== '' )  $addr['addressRegion']   = $region;
+        if ( $postal !== '' )  $addr['postalCode']      = $postal;
+        if ( $country !== '' ) $addr['addressCountry']  = $country;
+
+        return $addr;
+    }
+
+    private function build_area_served( $raw ) {
+        $raw = trim( (string) $raw );
+        if ( $raw === '' ) return null;
+
+        $parts = array_filter( array_map( 'trim', explode( ',', $raw ) ) );
+        if ( ! $parts ) return null;
+
+        if ( count( $parts ) === 1 ) {
+            return [ '@type' => 'City', 'name' => $parts[0] ];
+        }
+
+        $out = [];
+        foreach ( $parts as $name ) {
+            $out[] = [ '@type' => 'City', 'name' => $name ];
+        }
+        return $out;
+    }
+
     private function website( $s ) {
         $node = [
             '@type'       => 'WebSite',
@@ -84,9 +152,6 @@ class My_SEO_Schema {
             'publisher'   => [ '@id' => home_url( '/#organization' ) ],
         ];
 
-        // SearchAction выводим только если поиск открыт для индексации.
-        // Google требует, чтобы страница поиска была доступна,
-        // если она указана в potentialAction.
         if ( empty( $s['noindex_search'] ) ) {
             $node['potentialAction'] = [
                 '@type'       => 'SearchAction',
@@ -96,10 +161,6 @@ class My_SEO_Schema {
                 ],
                 'query-input' => 'required name=search_term_string',
             ];
-        }
-
-        if ( ! empty( $s['site_alt_name'] ) ) {
-            $node['alternativeName'] = $s['site_alt_name'];
         }
 
         return $node;

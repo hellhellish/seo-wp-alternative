@@ -2,15 +2,16 @@
 /**
  * Plugin Name: My SEO
  * Description: Самописная замена Yoast SEO
- * Version: 2.5.4
+ * Version: 2.6.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'MY_SEO_VERSION', '2.5.4' );
+define( 'MY_SEO_VERSION', '2.6.0' );
 define( 'MY_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MY_SEO_URL',  plugin_dir_url( __FILE__ ) );
 
+require_once MY_SEO_PATH . 'includes/class-text.php';
 require_once MY_SEO_PATH . 'includes/class-settings.php';
 require_once MY_SEO_PATH . 'includes/class-primary-term.php';
 require_once MY_SEO_PATH . 'includes/class-canonical.php';

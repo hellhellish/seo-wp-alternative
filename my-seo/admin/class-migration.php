@@ -17,7 +17,6 @@ class My_SEO_Migration {
             ));
         }
 
-        // Термины
         foreach ( $map as $old => $new ) {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$wpdb->termmeta} SET meta_key = %s WHERE meta_key = %s",
@@ -25,7 +24,6 @@ class My_SEO_Migration {
             ));
         }
 
-        // Юзеры
         foreach ( $map as $old => $new ) {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$wpdb->usermeta} SET meta_key = %s WHERE meta_key = %s",

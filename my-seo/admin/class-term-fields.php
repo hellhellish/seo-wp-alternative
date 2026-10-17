@@ -34,14 +34,14 @@ class My_SEO_Term_Fields {
     public function add_fields( $tax ) {
         wp_nonce_field( 'my_seo_term_save', 'my_seo_term_nonce' );
         ?>
-        <div class="form-field">
-            <label>SEO Title</label>
-            <input type="text" name="seo_title" maxlength="70">
-        </div>
-        <div class="form-field">
-            <label>Meta Description</label>
-            <textarea name="seo_description" rows="3" maxlength="160"></textarea>
-        </div>
+<div class="form-field">
+    <label>SEO Title <small>(макс. <?php echo (int) My_SEO_Text::TITLE_LIMIT; ?> символов)</small></label>
+    <input type="text" name="seo_title" maxlength="<?php echo (int) My_SEO_Text::TITLE_LIMIT; ?>">
+</div>
+<div class="form-field">
+    <label>Meta Description <small>(макс. <?php echo (int) My_SEO_Text::DESCRIPTION_LIMIT; ?> символов)</small></label>
+    <textarea name="seo_description" rows="3" maxlength="<?php echo (int) My_SEO_Text::DESCRIPTION_LIMIT; ?>"></textarea>
+</div>
         <div class="form-field">
             <label>Canonical URL</label>
             <input type="url" name="seo_canonical">
@@ -79,14 +79,14 @@ class My_SEO_Term_Fields {
         $og_img  = get_term_meta( $term->term_id, '_seo_og_image', true );
         $cascade = get_term_meta( $term->term_id, '_seo_cascade_noindex', true );
         ?>
-        <tr class="form-field">
-            <th><label>SEO Title</label></th>
-            <td><input type="text" name="seo_title" value="<?php echo esc_attr( $title ); ?>" maxlength="70" class="regular-text"></td>
-        </tr>
-        <tr class="form-field">
-            <th><label>Meta Description</label></th>
-            <td><textarea name="seo_description" rows="3" maxlength="160" class="large-text"><?php echo esc_textarea( $desc ); ?></textarea></td>
-        </tr>
+<tr class="form-field">
+    <th><label>SEO Title <small>(макс. <?php echo (int) My_SEO_Text::TITLE_LIMIT; ?> символов)</small></label></th>
+    <td><input type="text" name="seo_title" value="<?php echo esc_attr( $title ); ?>" maxlength="<?php echo (int) My_SEO_Text::TITLE_LIMIT; ?>" class="regular-text"></td>
+</tr>
+<tr class="form-field">
+    <th><label>Meta Description <small>(макс. <?php echo (int) My_SEO_Text::DESCRIPTION_LIMIT; ?> символов)</small></label></th>
+    <td><textarea name="seo_description" rows="3" maxlength="<?php echo (int) My_SEO_Text::DESCRIPTION_LIMIT; ?>" class="large-text"><?php echo esc_textarea( $desc ); ?></textarea></td>
+</tr>
         <tr class="form-field">
             <th><label>Canonical URL</label></th>
             <td><input type="url" name="seo_canonical" value="<?php echo esc_attr( $canon ); ?>" class="regular-text"></td>

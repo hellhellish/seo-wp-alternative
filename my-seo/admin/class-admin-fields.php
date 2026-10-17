@@ -23,8 +23,8 @@ class My_SEO_Admin_Fields {
         $og_img  = get_post_meta( $post->ID, '_seo_og_image', true );
 
         echo '<div class="my-seo-box">';
-        echo '<p><label><strong>SEO Title</strong><br><input type="text" name="seo_title" value="' . esc_attr( $title ) . '" class="widefat" maxlength="70"></label></p>';
-        echo '<p><label><strong>Meta Description</strong><br><textarea name="seo_description" class="widefat" rows="3" maxlength="160">' . esc_textarea( $desc ) . '</textarea></label></p>';
+echo '<p><label><strong>SEO Title</strong> <small>(макс. ' . (int) My_SEO_Text::TITLE_LIMIT . ' символов)</small><br><input type="text" name="seo_title" value="' . esc_attr( $title ) . '" class="widefat" maxlength="' . (int) My_SEO_Text::TITLE_LIMIT . '"></label></p>';
+echo '<p><label><strong>Meta Description</strong> <small>(макс. ' . (int) My_SEO_Text::DESCRIPTION_LIMIT . ' символов)</small><br><textarea name="seo_description" class="widefat" rows="3" maxlength="' . (int) My_SEO_Text::DESCRIPTION_LIMIT . '">' . esc_textarea( $desc ) . '</textarea></label></p>';
 
         echo '<p><label><strong>Robots</strong><br><select name="seo_robots">';
         foreach ( [ 'index,follow', 'noindex,follow', 'index,nofollow', 'noindex,nofollow' ] as $opt ) {

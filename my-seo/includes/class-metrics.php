@@ -121,8 +121,8 @@ class My_SEO_Metrics {
      */
     private static function flesch_ru( $words, $sentences, $syllables ) {
         if ( ! $words || ! $sentences ) return 0;
-        $asl = $words / $sentences;         // avg sentence length
-        $asw = $syllables / $words;         // avg syllables per word
+        $asl = $words / $sentences;
+        $asw = $syllables / $words;
         $score = 206.835 - 1.3 * $asw - 60.1 * $asl;
         return round( max( 0, min( 100, $score ) ), 1 );
     }

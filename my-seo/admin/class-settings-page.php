@@ -63,6 +63,9 @@ class My_SEO_Settings_Page {
                     'site_alt_name',
                     'org_name', 'org_alt_name', 'org_description',
                     'org_phone', 'org_legal_name', 'org_employees',
+                    'org_slogan', 'org_founding_location',
+                    'org_address_street', 'org_address_city',
+                    'org_address_region', 'org_address_postal',
                 ];
                 foreach ( $texts as $k ) {
                     if ( isset( $input[ $k ] ) ) {
@@ -73,9 +76,28 @@ class My_SEO_Settings_Page {
                 if ( isset( $input['org_email'] ) ) {
                     $out['org_email'] = sanitize_email( $input['org_email'] );
                 }
-                if ( isset( $input['org_logo'] ) ) {
-                    $out['org_logo'] = esc_url_raw( $input['org_logo'] );
+
+                foreach ( [ 'org_logo', 'org_image' ] as $k ) {
+                    if ( isset( $input[ $k ] ) ) {
+                        $out[ $k ] = esc_url_raw( $input[ $k ] );
+                    }
                 }
+
+                foreach ( [ 'org_logo_width', 'org_logo_height' ] as $k ) {
+                    if ( isset( $input[ $k ] ) ) {
+                        $out[ $k ] = absint( $input[ $k ] );
+                    }
+                }
+
+                if ( isset( $input['org_address_country'] ) ) {
+                    $country = strtoupper( sanitize_text_field( $input['org_address_country'] ) );
+                    $out['org_address_country'] = preg_match( '/^[A-Z]{2}$/', $country ) ? $country : '';
+                }
+
+                if ( isset( $input['org_area_served'] ) ) {
+                    $out['org_area_served'] = sanitize_text_field( $input['org_area_served'] );
+                }
+
                 if ( isset( $input['org_founding_date'] ) ) {
                     $date = sanitize_text_field( $input['org_founding_date'] );
                     $out['org_founding_date'] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ? $date : '';
@@ -232,7 +254,7 @@ class My_SEO_Settings_Page {
                            id="my_seo_site_alt_name"
                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[site_alt_name]"
                            value="<?php echo esc_attr( $s['site_alt_name'] ); ?>">
-                    <p class="description">Аббревиатура или короткая версия. Идёт в Schema <code>WebSite.alternativeName</code>.</p>
+                    <p class="description">Аббревиатура или короткая версия сайта. Резервное поле — сейчас в Schema не выводится, т.к. <code>alternativeName</code> не является свойством <code>WebSite</code>.</p>
                 </td>
             </tr>
             <tr>
@@ -248,7 +270,8 @@ class My_SEO_Settings_Page {
         </table>
 
         <h2>Организация</h2>
-        <p>Данные для Schema <code>Organization</code>. Используются на всех страницах сайта.</p>
+        <p>Данные для Schema <code>Organization</code>. Используются на всех страницах сайта.
+           Пустые поля в разметку не выводятся.</p>
 
         <table class="form-table" role="presentation">
             <tr>
@@ -268,6 +291,7 @@ class My_SEO_Settings_Page {
                            id="my_seo_org_alt_name"
                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_alt_name]"
                            value="<?php echo esc_attr( $s['org_alt_name'] ); ?>">
+                    <p class="description">Идёт в Schema <code>Organization.alternateName</code>.</p>
                 </td>
             </tr>
             <tr>
@@ -277,6 +301,7 @@ class My_SEO_Settings_Page {
                            id="my_seo_org_legal_name"
                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_legal_name]"
                            value="<?php echo esc_attr( $s['org_legal_name'] ); ?>">
+                    <p class="description">Например: ООО «Ромашка». Идёт в <code>legalName</code>.</p>
                 </td>
             </tr>
             <tr>
@@ -286,6 +311,34 @@ class My_SEO_Settings_Page {
                            id="my_seo_org_logo"
                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_logo]"
                            value="<?php echo esc_attr( $s['org_logo'] ); ?>">
+                    <p class="description">Google требует минимум 112×112 px. Рекомендуется квадратный или близкий к квадрату.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Размеры логотипа</th>
+                <td>
+                    <input type="number" min="0" step="1" style="width:80px"
+                           id="my_seo_org_logo_width"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_logo_width]"
+                           value="<?php echo esc_attr( $s['org_logo_width'] ); ?>"
+                           placeholder="ширина">
+                    &times;
+                    <input type="number" min="0" step="1" style="width:80px"
+                           id="my_seo_org_logo_height"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_logo_height]"
+                           value="<?php echo esc_attr( $s['org_logo_height'] ); ?>"
+                           placeholder="высота">
+                    <p class="description">Опционально. Идут в <code>logo.width</code> / <code>logo.height</code>.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_org_image">Представительское изображение (URL)</label></th>
+                <td>
+                    <input type="url" class="regular-text"
+                           id="my_seo_org_image"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_image]"
+                           value="<?php echo esc_attr( $s['org_image'] ); ?>">
+                    <p class="description">Не путать с логотипом. Идёт в <code>Organization.image</code>.</p>
                 </td>
             </tr>
             <tr>
@@ -294,6 +347,16 @@ class My_SEO_Settings_Page {
                     <textarea class="large-text" rows="3"
                               id="my_seo_org_description"
                               name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_description]"><?php echo esc_textarea( $s['org_description'] ); ?></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_org_slogan">Слоган</label></th>
+                <td>
+                    <input type="text" class="regular-text"
+                           id="my_seo_org_slogan"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_slogan]"
+                           value="<?php echo esc_attr( $s['org_slogan'] ); ?>">
+                    <p class="description">Идёт в <code>Organization.slogan</code>.</p>
                 </td>
             </tr>
             <tr>
@@ -321,6 +384,17 @@ class My_SEO_Settings_Page {
                            id="my_seo_org_founding_date"
                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_founding_date]"
                            value="<?php echo esc_attr( $s['org_founding_date'] ); ?>">
+                    <p class="description">Формат YYYY-MM-DD. Идёт в <code>foundingDate</code>.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_org_founding_location">Место основания</label></th>
+                <td>
+                    <input type="text" class="regular-text"
+                           id="my_seo_org_founding_location"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_founding_location]"
+                           value="<?php echo esc_attr( $s['org_founding_location'] ); ?>">
+                    <p class="description">Город. Идёт в <code>foundingLocation</code> как <code>Place</code>.</p>
                 </td>
             </tr>
             <tr>
@@ -330,6 +404,76 @@ class My_SEO_Settings_Page {
                            id="my_seo_org_employees"
                            name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_employees]"
                            value="<?php echo esc_attr( $s['org_employees'] ); ?>">
+                    <p class="description">Число или диапазон. Идёт в <code>numberOfEmployees</code>.</p>
+                </td>
+            </tr>
+        </table>
+
+        <h2>Адрес организации</h2>
+        <p>Юридический или фактический адрес. Если все поля пустые (кроме страны), блок <code>address</code> в разметку не попадёт.</p>
+
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row"><label for="my_seo_org_address_street">Улица, дом, офис</label></th>
+                <td>
+                    <input type="text" class="regular-text"
+                           id="my_seo_org_address_street"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_address_street]"
+                           value="<?php echo esc_attr( $s['org_address_street'] ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_org_address_city">Город</label></th>
+                <td>
+                    <input type="text" class="regular-text"
+                           id="my_seo_org_address_city"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_address_city]"
+                           value="<?php echo esc_attr( $s['org_address_city'] ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_org_address_region">Регион</label></th>
+                <td>
+                    <input type="text" class="regular-text"
+                           id="my_seo_org_address_region"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_address_region]"
+                           value="<?php echo esc_attr( $s['org_address_region'] ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_org_address_postal">Индекс</label></th>
+                <td>
+                    <input type="text" class="small-text"
+                           id="my_seo_org_address_postal"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_address_postal]"
+                           value="<?php echo esc_attr( $s['org_address_postal'] ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="my_seo_org_address_country">Страна</label></th>
+                <td>
+                    <input type="text" class="small-text" maxlength="2"
+                           id="my_seo_org_address_country"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_address_country]"
+                           value="<?php echo esc_attr( $s['org_address_country'] ); ?>"
+                           placeholder="RU">
+                    <p class="description">ISO-код из двух букв. По умолчанию <code>RU</code>.</p>
+                </td>
+            </tr>
+        </table>
+
+        <h2>География работы</h2>
+
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row"><label for="my_seo_org_area_served">Регион работы (areaServed)</label></th>
+                <td>
+                    <input type="text" class="large-text"
+                           id="my_seo_org_area_served"
+                           name="<?php echo esc_attr( My_SEO_Settings::OPTION ); ?>[org_area_served]"
+                           value="<?php echo esc_attr( $s['org_area_served'] ); ?>"
+                           placeholder="Санкт-Петербург, Ленинградская область">
+                    <p class="description">Города или регионы через запятую. Каждое значение пойдёт как <code>City</code> в <code>areaServed</code>.</p>
                 </td>
             </tr>
         </table>

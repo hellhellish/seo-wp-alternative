@@ -10,14 +10,12 @@ class My_SEO_Feed {
 
         $s = My_SEO_Settings::get();
 
-        // Фид выключен → 404
         if ( empty( $s['feed_enabled'] ) ) {
             status_header( 404 );
             nocache_headers();
             exit;
         }
 
-        // Проверка токена
         $token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
         if ( ! $token || ! hash_equals( (string) $s['feed_token'], $token ) ) {
             status_header( 403 );
@@ -27,7 +25,6 @@ class My_SEO_Feed {
             exit;
         }
 
-        // Заголовки для ботов
         header( 'Content-Type: application/json; charset=utf-8' );
         header( 'X-Robots-Tag: noindex, nofollow, noarchive, nosnippet', true );
         header( 'Cache-Control: no-store, no-cache, must-revalidate' );
@@ -86,14 +83,12 @@ class My_SEO_Feed {
     private function build_post_item( $post ) {
         $id = $post->ID;
 
-        // Content
         $content_html = apply_filters( 'the_content', $post->post_content );
         $content_html = str_replace( ']]>', ']]&gt;', $content_html );
 
         $metrics = My_SEO_Metrics::calculate( $content_html );
         $html    = My_SEO_Metrics::analyze_html( $content_html );
 
-        // Таксономии
         $taxes = [];
         foreach ( get_object_taxonomies( $post->post_type, 'objects' ) as $tax ) {
             if ( empty( $tax->show_ui ) ) continue;
@@ -112,7 +107,6 @@ class My_SEO_Feed {
             }, $terms );
         }
 
-        // ACF
         $acf = [];
         if ( function_exists( 'get_fields' ) ) {
             $fields = get_fields( $id );
@@ -121,7 +115,6 @@ class My_SEO_Feed {
             }
         }
 
-        // Изображение
         $featured = null;
         if ( has_post_thumbnail( $id ) ) {
             $featured = [
@@ -130,7 +123,6 @@ class My_SEO_Feed {
             ];
         }
 
-        // SEO
         $seo_title = get_post_meta( $id, '_seo_title', true );
         $seo_desc  = get_post_meta( $id, '_seo_description', true );
         $canonical = get_post_meta( $id, '_seo_canonical', true );

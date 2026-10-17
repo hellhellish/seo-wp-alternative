@@ -18,10 +18,10 @@ class My_SEO_User_Fields {
         ?>
         <h2>SEO</h2>
         <table class="form-table">
-            <tr><th><label>SEO Title</label></th>
-                <td><input type="text" name="seo_title" value="<?php echo esc_attr( $title ); ?>" class="regular-text" maxlength="70"></td></tr>
-            <tr><th><label>Meta Description</label></th>
-                <td><textarea name="seo_description" rows="3" class="large-text" maxlength="160"><?php echo esc_textarea( $desc ); ?></textarea></td></tr>
+<tr><th><label>SEO Title <small>(макс. <?php echo (int) My_SEO_Text::TITLE_LIMIT; ?> символов)</small></label></th>
+    <td><input type="text" name="seo_title" value="<?php echo esc_attr( $title ); ?>" class="regular-text" maxlength="<?php echo (int) My_SEO_Text::TITLE_LIMIT; ?>"></td></tr>
+<tr><th><label>Meta Description <small>(макс. <?php echo (int) My_SEO_Text::DESCRIPTION_LIMIT; ?> символов)</small></label></th>
+    <td><textarea name="seo_description" rows="3" class="large-text" maxlength="<?php echo (int) My_SEO_Text::DESCRIPTION_LIMIT; ?>"><?php echo esc_textarea( $desc ); ?></textarea></td></tr>
             <tr><th><label>Canonical URL</label></th>
                 <td><input type="url" name="seo_canonical" value="<?php echo esc_attr( $canon ); ?>" class="regular-text"></td></tr>
             <tr><th><label>Robots</label></th>

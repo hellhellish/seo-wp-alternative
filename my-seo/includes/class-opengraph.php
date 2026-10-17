@@ -92,7 +92,7 @@ class My_SEO_OpenGraph {
         // Фронт-пейдж и home — всегда website
         if ( is_front_page() || is_home() ) {
             $type        = 'website';
-            $url         = home_url( '/' );
+            $url         = $this->self_or_paged( home_url( '/' ) );
             $title       = get_bloginfo( 'name' );
             $description = get_bloginfo( 'description' );
 
@@ -156,7 +156,7 @@ class My_SEO_OpenGraph {
             $term = get_queried_object();
             if ( $term && ! is_wp_error( $term ) ) {
                 $type        = 'website';
-                $url         = get_term_link( $term );
+                $url         = $this->self_or_paged( get_term_link( $term ) );
                 $title       = $this->resolve_term_title( $term );
                 $description = $this->resolve_term_description( $term );
                 $image       = $this->resolve_term_image( $term );
@@ -165,7 +165,7 @@ class My_SEO_OpenGraph {
         elseif ( is_author() ) {
             $user_id     = get_queried_object_id();
             $type        = 'website';
-            $url         = get_author_posts_url( $user_id );
+            $url         = $this->self_or_paged( get_author_posts_url( $user_id ) );
             $title       = get_the_author_meta( 'display_name', $user_id );
             $description = get_the_author_meta( 'description', $user_id );
 
@@ -176,9 +176,14 @@ class My_SEO_OpenGraph {
         }
         elseif ( is_post_type_archive() ) {
             $type        = 'website';
-            $url         = get_post_type_archive_link( get_query_var( 'post_type' ) );
+            $url         = $this->self_or_paged( get_post_type_archive_link( get_query_var( 'post_type' ) ) );
             $title       = post_type_archive_title( '', false );
             $description = '';
+        }
+        elseif ( is_date() ) {
+            $type  = 'website';
+            $url   = $this->self_or_paged( $this->date_archive_url() );
+            $title = wp_get_document_title();
         }
         else {
             $type  = 'website';
@@ -189,6 +194,9 @@ class My_SEO_OpenGraph {
         if ( $title === '' ) {
             $title = wp_get_document_title();
         }
+
+        // Description всегда обрезаем через общую утилиту
+        $description = My_SEO_Text::trim_description( $description );
 
         if ( $image === '' && ! empty( $s['default_og_image'] ) ) {
             $image     = $s['default_og_image'];
@@ -219,10 +227,43 @@ class My_SEO_OpenGraph {
         ];
     }
 
+    /**
+     * URL текущей страницы пагинации (или базовый URL).
+     * Синхронизирован с логикой My_SEO_Canonical.
+     */
+    private function self_or_paged( $base ) {
+        if ( ! is_paged() ) {
+            return $base;
+        }
+
+        $paged = (int) get_query_var( 'paged' );
+        if ( $paged < 2 ) {
+            return $base;
+        }
+
+        return get_pagenum_link( $paged );
+    }
+
+    /**
+     * URL архива даты — через нативные функции WP.
+     */
+    private function date_archive_url() {
+        if ( is_day() ) {
+            return get_day_link( get_query_var( 'year' ), get_query_var( 'monthnum' ), get_query_var( 'day' ) );
+        }
+        if ( is_month() ) {
+            return get_month_link( get_query_var( 'year' ), get_query_var( 'monthnum' ) );
+        }
+        if ( is_year() ) {
+            return get_year_link( get_query_var( 'year' ) );
+        }
+        return '';
+    }
+
     private function resolve_title( $post_id ) {
         $seo = get_post_meta( $post_id, '_seo_title', true );
         if ( $seo !== '' ) {
-            return $seo;
+            return html_entity_decode( $seo, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
         }
         return get_the_title( $post_id );
     }
@@ -253,8 +294,15 @@ class My_SEO_OpenGraph {
     private function resolve_term_title( $term ) {
         $seo = get_term_meta( $term->term_id, '_seo_title', true );
         if ( $seo !== '' ) {
-            return $seo;
+            return html_entity_decode( $seo, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
         }
+
+        // Fallback: document_title (учитывает хардкод-шаблоны темы через pre_get_document_title)
+        $doc_title = wp_get_document_title();
+        if ( $doc_title !== '' && $doc_title !== $term->name ) {
+            return html_entity_decode( $doc_title, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        }
+
         return $term->name;
     }
 
